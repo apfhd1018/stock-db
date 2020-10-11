@@ -20,7 +20,7 @@ const App = () => {
   const [inputValue, setInputValue] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
-  const [minPrice, setMinPrice] = useState("");
+  const [minPrice, setMinPrice] = useState(0);
   // ==========종목 2개 검색 정보 변수===========
   const [compareInfoFirst, setCompareInfoFirst] = useState({
     date: [],
@@ -44,8 +44,8 @@ const App = () => {
   const [compareInputValueSecond, setCompareInputValueSecond] = useState("");
   const [compareStartDate, setCompareStartDate] = useState("");
   const [compareEndDate, setCompareEndDate] = useState("");
-  const [compareMinPriceFirst, setCompareMinPriceFirst] = useState("");
-  const [compareMinPriceSecond, setCompareMinPriceSecond] = useState("");
+  const [compareMinPriceFirst, setCompareMinPriceFirst] = useState(0);
+  const [compareMinPriceSecond, setCompareMinPriceSecond] = useState(0);
 
   const API_KEY = "HYMUUQAJ14PK7WTL";
 
@@ -59,13 +59,6 @@ const App = () => {
     `${compareInfoSecond.title} 시가`,
     `${compareInfoSecond.title} 저가`,
   ];
-  const compareMin = (a, b) => {
-    if (a >= b) {
-      return b;
-    } else if (a < b) {
-      return a;
-    }
-  };
 
   // 1개 비교 종목 값 저장
   const inputTarget = (e) => {
@@ -92,7 +85,7 @@ const App = () => {
     return year + "-" + month + "-" + day;
   };
   // ==========================
-  //   API 호출 후 변수 지정
+  //   API 호출 함수
   // ==========================
   const eventAxios = (API, startDate, endDate, setStockInfo, setMinPrice) => {
     const xValuesFunction = []; // 날짜
@@ -102,37 +95,46 @@ const App = () => {
     const yValuesLowPrice = []; // 저가
     const yValuesVolume = []; // 거래량
 
-    axios.get(API).then(({ data }) => {
-      for (var key in data["Time Series (Daily)"]) {
-        xValuesFunction.unshift(key);
-        yValuesClosePrice.unshift(data["Time Series (Daily)"][key]["4. close"]);
-        yValuesHighPrice.unshift(data["Time Series (Daily)"][key]["2. high"]);
-        yValuesOpenPrice.unshift(data["Time Series (Daily)"][key]["1. open"]);
-        yValuesLowPrice.unshift(data["Time Series (Daily)"][key]["3. low"]);
-        yValuesVolume.unshift(data["Time Series (Daily)"][key]["6. volume"]);
-      }
-      // startDate 변수를 스트링으로 변환하여 인덱스 위치값 반환
-      const startDateString = getFormatDate(startDate);
-      const startIndex = xValuesFunction.indexOf(startDateString);
-      // endDate 변수를 스트링으로 변환하여 인덱스 위치값 반환
-      const endDateString = getFormatDate(endDate);
-      const endIndex = xValuesFunction.indexOf(endDateString);
-      // 전체 배열을 시작~종료 사이의 날짜로 쪼개기
-      const searchDate = xValuesFunction.slice(startIndex, endIndex + 1); // 날짜
-      const searchClosePrice = yValuesClosePrice.slice(
-        startIndex,
-        endIndex + 1
-      ); // 종가 쪼개기
-      const searchHighPrice = yValuesHighPrice.slice(startIndex, endIndex + 1); // 고가 쪼개기
-      const searchOpenPrice = yValuesOpenPrice.slice(startIndex, endIndex + 1); // 시가 쪼개기
-      const searchLowPrice = yValuesLowPrice.slice(startIndex, endIndex + 1); // 저가 쪼개기
-      const searchVolume = yValuesVolume.slice(startIndex, endIndex + 1); // 거래량 쪼개기
-      // 종가 중 최소값 찾기
-      const minArr = Math.min.apply(Math, searchClosePrice);
-      const minArrClosePrice = (minArr * 0.95).toFixed(0); //최소값의 95%를 차트 yAxis 최소값에 반영
-      // 검색 해당되는 정보를 stockInfo에 최종 저장
-      setStockInfo(() => {
-        return {
+    axios
+      .get(API)
+      .then(({ data }) => {
+        for (var key in data["Time Series (Daily)"]) {
+          xValuesFunction.unshift(key);
+          yValuesClosePrice.unshift(
+            data["Time Series (Daily)"][key]["4. close"]
+          );
+          yValuesHighPrice.unshift(data["Time Series (Daily)"][key]["2. high"]);
+          yValuesOpenPrice.unshift(data["Time Series (Daily)"][key]["1. open"]);
+          yValuesLowPrice.unshift(data["Time Series (Daily)"][key]["3. low"]);
+          yValuesVolume.unshift(data["Time Series (Daily)"][key]["6. volume"]);
+        }
+        // startDate 변수를 스트링으로 변환하여 인덱스 위치값 반환
+        const startDateString = getFormatDate(startDate);
+        const startIndex = xValuesFunction.indexOf(startDateString);
+        // endDate 변수를 스트링으로 변환하여 인덱스 위치값 반환
+        const endDateString = getFormatDate(endDate);
+        const endIndex = xValuesFunction.indexOf(endDateString);
+        // 전체 배열을 시작~종료 사이의 날짜로 쪼개기
+        const searchDate = xValuesFunction.slice(startIndex, endIndex + 1); // 날짜
+        const searchClosePrice = yValuesClosePrice.slice(
+          startIndex,
+          endIndex + 1
+        ); // 종가 쪼개기
+        const searchHighPrice = yValuesHighPrice.slice(
+          startIndex,
+          endIndex + 1
+        ); // 고가 쪼개기
+        const searchOpenPrice = yValuesOpenPrice.slice(
+          startIndex,
+          endIndex + 1
+        ); // 시가 쪼개기
+        const searchLowPrice = yValuesLowPrice.slice(startIndex, endIndex + 1); // 저가 쪼개기
+        const searchVolume = yValuesVolume.slice(startIndex, endIndex + 1); // 거래량 쪼개기
+        // 종가 중 최소값 찾기
+        const minArr = Math.min.apply(Math, searchClosePrice);
+        const minArrClosePrice = (minArr * 0.95).toFixed(0); //최소값의 95%를 차트 yAxis 최소값에 반영
+        // 검색 해당되는 정보를 newStockInfo에 저장 => stockInfo state에 최종 저장
+        const newStockInfo = {
           date: searchDate,
           closePrice: searchClosePrice,
           highPrice: searchHighPrice,
@@ -141,9 +143,13 @@ const App = () => {
           volume: searchVolume,
           title: data["Meta Data"]["2. Symbol"],
         };
+        setStockInfo(newStockInfo);
+        setMinPrice(minArrClosePrice);
+      })
+      .catch((err) => {
+        alert("종목을 다시 확인해 주세요");
+        console.log(err);
       });
-      setMinPrice(minArrClosePrice);
-    });
   };
 
   // ==========================
@@ -151,7 +157,6 @@ const App = () => {
   // ==========================
   const submit = () => {
     let API_Call = `https://www.alphavantage.co/query?function=TIME_SERIES_DAILY_ADJUSTED&symbol=${inputValue}&outputsize=full&apikey=${API_KEY}`;
-
     eventAxios(API_Call, startDate, endDate, setStockInfo, setMinPrice);
   };
   // ==========================
@@ -178,8 +183,8 @@ const App = () => {
       setCompareInfoSecond,
       setCompareMinPriceSecond
     );
-    console.log("CompareMinPriceFirst : ", compareMinPriceFirst);
-    console.log("CompareMinPriceSecond : ", compareMinPriceSecond);
+    // console.log("CompareMinPriceFirst : ", compareMinPriceFirst);
+    // console.log("CompareMinPriceSecond : ", compareMinPriceSecond);
   };
 
   // ======================================
@@ -200,10 +205,7 @@ const App = () => {
             dateFormat="yyyy-MM-dd"
             maxDate={new Date()}
             filterDate={(date) => date.getDay() !== 6 && date.getDay() !== 0}
-            // isClearable
             placeholderText="시작날짜"
-            startDate={startDate}
-            endDate={endDate}
           />
           ~
           <DatePicker
@@ -212,10 +214,7 @@ const App = () => {
             dateFormat="yyyy-MM-dd"
             maxDate={new Date()}
             filterDate={(date) => date.getDay() !== 6 && date.getDay() !== 0}
-            // isClearable
             placeholderText="종료날짜"
-            startDate={startDate}
-            endDate={endDate}
           />
         </div>
         <div className="search">
@@ -322,10 +321,7 @@ const App = () => {
             dateFormat="yyyy-MM-dd"
             maxDate={new Date()}
             filterDate={(date) => date.getDay() !== 6 && date.getDay() !== 0}
-            // isClearable
             placeholderText="시작날짜"
-            startDate={compareStartDate}
-            endDate={compareEndDate}
           />
           ~
           <DatePicker
@@ -334,10 +330,7 @@ const App = () => {
             dateFormat="yyyy-MM-dd"
             maxDate={new Date()}
             filterDate={(date) => date.getDay() !== 6 && date.getDay() !== 0}
-            // isClearable
             placeholderText="종료날짜"
-            startDate={compareStartDate}
-            endDate={compareEndDate}
           />
         </div>
         <div className="search">
@@ -346,15 +339,24 @@ const App = () => {
             type="text"
             value={compareInputValueFirst}
             onChange={compareInputTargetFirst}
+            onKeyPress={(e) => {
+              if (e.key === "Enter") {
+                secondSubmit();
+              }
+            }}
           />
           <input
             type="text"
             value={compareInputValueSecond}
             onChange={compareInputTargetSecond}
+            onKeyPress={(e) => {
+              if (e.key === "Enter") {
+                secondSubmit();
+              }
+            }}
           />
           <button onClick={secondSubmit}>search</button>
         </div>
-
         <div className="chart">
           <ReactEcharts
             option={{
@@ -371,7 +373,11 @@ const App = () => {
               yAxis: {
                 type: "value",
                 // min: compareMin(compareMinPriceFirst, compareMinPriceSecond),
-                min: 0,
+                min:
+                  +compareMinPriceFirst > +compareMinPriceSecond
+                    ? compareMinPriceSecond
+                    : compareMinPriceFirst,
+                // min: 0,
               },
               legend: {
                 data: compareData,
